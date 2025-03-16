@@ -6,42 +6,17 @@ const wl = wayland.client.wl;
 const xdg = wayland.client.xdg;
 const zwlr = wayland.client.zwlr;
 
-const Context = struct {
-    shm: ?*wl.Shm = null,
-    compositor: ?*wl.Compositor = null,
-    wm_base: ?*xdg.WmBase = null,
-    layer_shell: ?*zwlr.LayerShellV1 = null,
-};
-
-fn registryListener(registry: *wl.Registry, event: wl.Registry.Event, context: *Context) void {
-    switch (event) {
-        .global => |global| {
-            if (mem.orderZ(u8, global.interface, wl.Compositor.interface.name) == .eq) {
-                context.compositor = registry.bind(global.name, wl.Compositor, 1) catch return;
-            } else if (mem.orderZ(u8, global.interface, wl.Shm.interface.name) == .eq) {
-                context.shm = registry.bind(global.name, wl.Shm, 1) catch return;
-            } else if (mem.orderZ(u8, global.interface, xdg.WmBase.interface.name) == .eq) {
-                context.wm_base = registry.bind(global.name, xdg.WmBase, 1) catch return;
-            } else if (mem.orderZ(u8, global.interface, zwlr.LayerShellV1.interface.name) == .eq) {
-                context.layer_shell = registry.bind(global.name, zwlr.LayerShellV1, 3) catch return;
-            }
-        },
-        .global_remove => {},
-    }
-}
+const Globals = @import("globals.zig").Globals;
 
 pub fn main() anyerror!void {
-    const display = try wl.Display.connect(null);
-    const registry = try display.getRegistry();
+    var globals = Globals{
+        .display = try wl.Display.connect(null),
+    };
+    try globals.init();
 
-    var context = Context{};
-    registry.setListener(*Context, registryListener, &context);
-    if (display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
-
-    const shm = context.shm orelse return error.NoWlShm;
-    const compositor = context.compositor orelse return error.NoWlCompositor;
-    const wm_base = context.wm_base orelse return error.NoXdgWmBase;
-    // const layer_shell = context.layer_shell orelse return error.NoZwlrLayerShellV1;
+    const shm = globals.shm orelse return error.NoWlShm;
+    const compositor = globals.compositor orelse return error.NoWlCompositor;
+    const wm_base = globals.wm_base orelse return error.NoXdgWmBase;
 
     const buffer = blk: {
         const width = 128;
@@ -84,13 +59,13 @@ pub fn main() anyerror!void {
     xdg_toplevel.setListener(*bool, xdgToplevelListener, &running);
 
     surface.commit();
-    if (display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
+    if (globals.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
 
     surface.attach(buffer, 0, 0);
     surface.commit();
 
     while (running) {
-        if (display.dispatch() != .SUCCESS) return error.DispatchFailed;
+        if (globals.display.dispatch() != .SUCCESS) return error.DispatchFailed;
     }
 }
 
