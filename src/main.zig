@@ -6,7 +6,7 @@ const wl = wayland.client.wl;
 const xdg = wayland.client.xdg;
 const zwlr = wayland.client.zwlr;
 
-const Context = @import("context.zig").Context;
+const Context = @import("Context.zig").Context;
 
 pub fn main() anyerror!void {
     var context = Context{

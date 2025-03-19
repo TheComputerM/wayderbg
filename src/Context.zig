@@ -6,8 +6,8 @@ const wl = wayland.client.wl;
 const xdg = wayland.client.xdg;
 const zwlr = wayland.client.zwlr;
 
-const Outputs = @import("outputs.zig").Outputs;
-const Output = @import("outputs.zig").Output;
+const Outputs = @import("Outputs.zig").Outputs;
+const Output = @import("Output.zig").Output;
 
 pub const Context = struct {
     display: *wl.Display,
