@@ -53,7 +53,10 @@ fn _registryListener(registry: *wl.Registry, event: wl.Registry.Event, globals: 
                     .wl_name = global.name,
                 };
                 try globals.outputs.prepend(output);
+            } else {
+                return;
             }
+            std.log.info("detected {s}:{}", .{ global.interface, global.name });
         },
         .global_remove => |global| {
             globals.outputs.destroyOutput(global.name);

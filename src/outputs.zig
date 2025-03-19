@@ -16,6 +16,7 @@ pub const Outputs = struct {
         errdefer outputs.allocator.destroy(node);
         node.data = output;
         outputs.data.prepend(node);
+        std.log.debug("added output wl_output:{} to list of outputs", .{output.wl_name});
     }
 
     pub fn destroy(outputs: *Outputs) void {
@@ -33,7 +34,6 @@ pub const Outputs = struct {
                 node.data.destroy();
                 outputs.data.remove(node);
                 outputs.allocator.destroy(node);
-                std.log.debug("Destroyed output wl_name:{}", .{wl_name});
                 return;
             }
             it = node.next;
@@ -57,6 +57,7 @@ pub const Output = struct {
 
     pub fn destroy(output: *Output) void {
         output.destroyPrimitives();
+        std.log.debug("destroyed output wl_name:{}", .{output.wl_name});
     }
 
     fn destroyPrimitives(output: *Output) void {
