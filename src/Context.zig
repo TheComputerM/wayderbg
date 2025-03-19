@@ -49,10 +49,11 @@ fn _registryListener(registry: *wl.Registry, event: wl.Registry.Event, context: 
                 const wl_output = try registry.bind(global.name, wl.Output, 4);
                 errdefer wl_output.release();
                 const output = Output{
+                    .context = context,
                     .wl_output = wl_output,
                     .wl_name = global.name,
                 };
-                try context.outputs.prepend(output);
+                try context.outputs.addOutput(output);
             } else {
                 return;
             }

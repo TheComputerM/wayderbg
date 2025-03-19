@@ -7,11 +7,12 @@ pub const Outputs = struct {
     data: std.SinglyLinkedList(Output) = .{},
     allocator: std.mem.Allocator = std.heap.page_allocator,
 
-    pub fn prepend(outputs: *Outputs, output: Output) !void {
+    pub fn addOutput(outputs: *Outputs, output: Output) !void {
         const node = try outputs.allocator.create(std.SinglyLinkedList(Output).Node);
         errdefer outputs.allocator.destroy(node);
         node.data = output;
         outputs.data.prepend(node);
+        node.data.init();
         std.log.debug("added output wl_output:{} to list of outputs", .{output.wl_name});
     }
 
