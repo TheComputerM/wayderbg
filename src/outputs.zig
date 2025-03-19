@@ -26,13 +26,14 @@ pub const Outputs = struct {
     }
 
     /// Destroys the output with the given wl_name
-    pub fn destoryOutput(outputs: *Outputs, wl_name: u32) void {
+    pub fn destroyOutput(outputs: *Outputs, wl_name: u32) void {
         var it = outputs.data.first;
         while (it) |node| {
             if (node.data.wl_name == wl_name) {
                 node.data.destroy();
                 outputs.data.remove(node);
                 outputs.allocator.destroy(node);
+                std.log.debug("Destroyed output wl_name:{}", .{wl_name});
                 return;
             }
             it = node.next;

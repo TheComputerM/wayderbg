@@ -56,7 +56,7 @@ fn _registryListener(registry: *wl.Registry, event: wl.Registry.Event, globals: 
             }
         },
         .global_remove => |global| {
-            globals.outputs.destoryOutput(global.name);
+            globals.outputs.destroyOutput(global.name);
         },
     }
 }
