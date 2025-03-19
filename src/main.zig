@@ -6,18 +6,18 @@ const wl = wayland.client.wl;
 const xdg = wayland.client.xdg;
 const zwlr = wayland.client.zwlr;
 
-const Globals = @import("globals.zig").Globals;
+const Context = @import("context.zig").Context;
 
 pub fn main() anyerror!void {
-    var globals = Globals{
+    var context = Context{
         .display = try wl.Display.connect(null),
     };
-    try globals.init();
-    defer globals.destroy();
+    try context.init();
+    defer context.destroy();
 
-    const shm = globals.shm orelse return error.NoWlShm;
-    const compositor = globals.compositor orelse return error.NoWlCompositor;
-    const wm_base = globals.wm_base orelse return error.NoXdgWmBase;
+    const shm = context.shm orelse return error.NoWlShm;
+    const compositor = context.compositor orelse return error.NoWlCompositor;
+    const wm_base = context.wm_base orelse return error.NoXdgWmBase;
 
     const buffer = blk: {
         const width = 128;
@@ -60,13 +60,13 @@ pub fn main() anyerror!void {
     xdg_toplevel.setListener(*bool, xdgToplevelListener, &running);
 
     surface.commit();
-    if (globals.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
+    if (context.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
 
     surface.attach(buffer, 0, 0);
     surface.commit();
 
     while (running) {
-        if (globals.display.dispatch() != .SUCCESS) return error.DispatchFailed;
+        if (context.display.dispatch() != .SUCCESS) return error.DispatchFailed;
     }
 }
 
