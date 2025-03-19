@@ -15,7 +15,6 @@ pub fn build(b: *std.Build) void {
     scanner.generate("wl_compositor", 1);
     scanner.generate("wl_shm", 1);
     scanner.generate("wl_output", 4);
-    scanner.generate("xdg_wm_base", 1);
     scanner.generate("zwlr_layer_shell_v1", 3);
 
     const exe_mod = b.createModule(.{

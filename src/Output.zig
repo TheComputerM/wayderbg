@@ -74,6 +74,39 @@ pub const Output = struct {
         layer_surface.setListener(*Output, layerSurfaceListener, output);
         wl_surface.commit();
     }
+
+    fn render(output: *Output) !void {
+        const buffer = blk: {
+            const width = output.render_width;
+            const height = output.render_height;
+            const stride = width * 4;
+            const size = stride * height;
+
+            const Pixel = [4]u8;
+
+            const fd = try std.posix.memfd_create("wayderbg", 0);
+            try std.posix.ftruncate(fd, size);
+            const data = try std.posix.mmap(
+                null,
+                size,
+                std.posix.PROT.READ | std.posix.PROT.WRITE,
+                .{ .TYPE = .SHARED },
+                fd,
+                0,
+            );
+            const pixels: []Pixel = mem.bytesAsSlice(Pixel, data);
+            @memset(pixels, Pixel{ 0, 0, 0xFF, 0xFF });
+
+            const pool = try output.context.shm.?.createPool(fd, size);
+            defer pool.destroy();
+
+            break :blk try pool.createBuffer(0, width, height, stride, wl.Shm.Format.argb8888);
+        };
+
+        const wl_surface = output.wl_surface.?;
+        wl_surface.attach(buffer, 0, 0);
+        wl_surface.commit();
+    }
 };
 
 fn outputListener(_: *wl.Output, event: wl.Output.Event, output: *Output) void {
@@ -113,7 +146,9 @@ fn layerSurfaceListener(layer_surface: *zwlr.LayerSurfaceV1, event: zwlr.LayerSu
             output.render_height = h;
             output.configured = true;
 
-            // TODO: render on surface
+            output.render() catch |err| {
+                std.log.err("error rendering on output: {}", .{err});
+            };
         },
         .closed => {
             output.destroyPrimitives();

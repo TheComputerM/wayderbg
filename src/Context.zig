@@ -14,7 +14,6 @@ pub const Context = struct {
 
     shm: ?*wl.Shm = null,
     compositor: ?*wl.Compositor = null,
-    wm_base: ?*xdg.WmBase = null,
     layer_shell: ?*zwlr.LayerShellV1 = null,
 
     outputs: Outputs = Outputs{},
@@ -29,7 +28,6 @@ pub const Context = struct {
         if (context.compositor) |compositor| compositor.destroy();
         if (context.layer_shell) |layer_shell| layer_shell.destroy();
         if (context.shm) |shm| shm.destroy();
-        if (context.wm_base) |wm_base| wm_base.destroy();
         context.outputs.destroy();
     }
 };
@@ -41,8 +39,6 @@ fn _registryListener(registry: *wl.Registry, event: wl.Registry.Event, context: 
                 context.compositor = try registry.bind(global.name, wl.Compositor, 1);
             } else if (mem.orderZ(u8, global.interface, wl.Shm.interface.name) == .eq) {
                 context.shm = try registry.bind(global.name, wl.Shm, 1);
-            } else if (mem.orderZ(u8, global.interface, xdg.WmBase.interface.name) == .eq) {
-                context.wm_base = try registry.bind(global.name, xdg.WmBase, 1);
             } else if (mem.orderZ(u8, global.interface, zwlr.LayerShellV1.interface.name) == .eq) {
                 context.layer_shell = try registry.bind(global.name, zwlr.LayerShellV1, 3);
             } else if (mem.orderZ(u8, global.interface, wl.Output.interface.name) == .eq) {
