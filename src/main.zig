@@ -13,6 +13,7 @@ pub fn main() anyerror!void {
         .display = try wl.Display.connect(null),
     };
     try globals.init();
+    defer globals.destroy();
 
     const shm = globals.shm orelse return error.NoWlShm;
     const compositor = globals.compositor orelse return error.NoWlCompositor;
