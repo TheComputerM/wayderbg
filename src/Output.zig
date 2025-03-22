@@ -73,6 +73,7 @@ pub const Output = struct {
 
         layer_surface.setListener(*Output, layerSurfaceListener, output);
         wl_surface.commit();
+        if (output.context.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
     }
 
     fn render(output: *Output) !void {
@@ -106,6 +107,7 @@ pub const Output = struct {
         const wl_surface = output.wl_surface.?;
         wl_surface.attach(buffer, 0, 0);
         wl_surface.commit();
+        if (output.context.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
     }
 };
 
@@ -130,21 +132,21 @@ fn outputListener(_: *wl.Output, event: wl.Output.Event, output: *Output) void {
 
 fn layerSurfaceListener(layer_surface: *zwlr.LayerSurfaceV1, event: zwlr.LayerSurfaceV1.Event, output: *Output) void {
     switch (event) {
-        .configure => |ev| {
-            layer_surface.ackConfigure(ev.serial);
+        .configure => |configure| {
+            layer_surface.ackConfigure(configure.serial);
 
-            const w: u31 = @truncate(ev.width);
-            const h: u31 = @truncate(ev.height);
+            const w: u31 = @truncate(configure.width);
+            const h: u31 = @truncate(configure.height);
 
             if (output.configured and output.render_width == w and output.render_height == h) {
                 output.wl_surface.?.commit();
                 return;
             }
 
-            std.log.debug("configuring output for wl_output:{} as {}x{}", .{ output.wl_name, w, h });
             output.render_width = w;
             output.render_height = h;
             output.configured = true;
+            std.log.debug("configuring output for wl_output:{} as {}x{}", .{ output.wl_name, w, h });
 
             output.render() catch |err| {
                 std.log.err("error rendering on output: {}", .{err});
