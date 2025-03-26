@@ -45,8 +45,9 @@ pub const Output = struct {
         output.configured = false;
     }
 
-    pub fn init(output: *Output) void {
+    pub fn init(output: *Output) !void {
         output.wl_output.setListener(*Output, outputListener, output);
+        if (output.context.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
     }
 
     fn addSurfaceToOutput(output: *Output) !void {
@@ -76,7 +77,7 @@ pub const Output = struct {
         if (output.context.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
     }
 
-    fn render(output: *Output) !void {
+    pub fn render(output: *Output) !void {
         const buffer = blk: {
             const width = output.render_width;
             const height = output.render_height;
@@ -121,10 +122,10 @@ fn outputListener(_: *wl.Output, event: wl.Output.Event, output: *Output) void {
             output.scale = @intCast(scale.factor);
         },
         .done => {
-            std.log.info("wl_output:{} configured", .{output.wl_name});
             output.addSurfaceToOutput() catch |err| {
                 std.log.err("error adding surface to output: {}", .{err});
             };
+            std.log.info("wl_output:{} configured", .{output.wl_name});
         },
         else => {},
     }
@@ -147,10 +148,6 @@ fn layerSurfaceListener(layer_surface: *zwlr.LayerSurfaceV1, event: zwlr.LayerSu
             output.render_height = h;
             output.configured = true;
             std.log.debug("configuring output for wl_output:{} as {}x{}", .{ output.wl_name, w, h });
-
-            output.render() catch |err| {
-                std.log.err("error rendering on output: {}", .{err});
-            };
         },
         .closed => {
             output.destroyPrimitives();

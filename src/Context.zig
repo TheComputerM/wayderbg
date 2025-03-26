@@ -20,6 +20,7 @@ pub const Context = struct {
 
     pub fn init(globals: *Context) !void {
         const registry = try globals.display.getRegistry();
+        defer registry.destroy();
         registry.setListener(*Context, registryListener, globals);
         if (globals.display.roundtrip() != .SUCCESS) return error.RoundtripFailed;
     }
@@ -28,6 +29,7 @@ pub const Context = struct {
         if (context.compositor) |compositor| compositor.destroy();
         if (context.layer_shell) |layer_shell| layer_shell.destroy();
         if (context.shm) |shm| shm.destroy();
+        context.display.disconnect();
         context.outputs.destroy();
     }
 };
@@ -63,7 +65,7 @@ fn _registryListener(registry: *wl.Registry, event: wl.Registry.Event, context: 
 
 /// Wrapper function to catch errors in _registryListener.
 fn registryListener(registry: *wl.Registry, event: wl.Registry.Event, context: *Context) void {
-    _registryListener(registry, event, context) catch |err| switch (err) {
-        else => return,
+    _registryListener(registry, event, context) catch |err| {
+        std.log.err("Error in registryListener: {}", .{err});
     };
 }

@@ -16,6 +16,13 @@ pub fn main() anyerror!void {
     errdefer context.destroy();
 
     while (true) {
+        if (context.outputs.ready()) {
+            try context.outputs.data.first.?.data.render();
+            break;
+        }
+    }
+
+    while (true) {
         if (context.display.dispatch() != .SUCCESS) return error.DispatchFailed;
     }
 }

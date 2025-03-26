@@ -12,8 +12,8 @@ pub const Outputs = struct {
         errdefer outputs.allocator.destroy(node);
         node.data = output;
         outputs.data.prepend(node);
-        node.data.init();
         std.log.debug("added output wl_output:{} to list of outputs", .{output.wl_name});
+        try node.data.init();
     }
 
     pub fn destroy(outputs: *Outputs) void {
@@ -35,5 +35,16 @@ pub const Outputs = struct {
             }
             it = node.next;
         }
+    }
+
+    pub fn ready(outputs: *Outputs) bool {
+        var it = outputs.data.first;
+        while (it) |node| {
+            if (!node.data.configured) {
+                return false;
+            }
+            it = node.next;
+        }
+        return true;
     }
 };
